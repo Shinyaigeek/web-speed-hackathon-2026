@@ -1,13 +1,11 @@
 import { ReactNode, useCallback, useEffect, useId, useState } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 import { Helmet, HelmetProvider } from "react-helmet";
-import { Provider } from "react-redux";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
-import { store } from "@web-speed-hackathon-2026/client/src/store";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 import "../index.css";
@@ -119,23 +117,21 @@ export function createPage(renderContent: (props: { activeUser: Models.User | nu
     }
 
     return (
-      <Provider store={store}>
-        <SSRDataContext.Provider value={ssrData?.routeData ?? null}>
-          <HelmetProvider>
-            <AppPage
-              activeUser={activeUser}
-              authModalId={authModalId}
-              newPostModalId={newPostModalId}
-              onLogout={handleLogout}
-            >
-              {renderContent({ activeUser, authModalId })}
-            </AppPage>
+      <SSRDataContext.Provider value={ssrData?.routeData ?? null}>
+        <HelmetProvider>
+          <AppPage
+            activeUser={activeUser}
+            authModalId={authModalId}
+            newPostModalId={newPostModalId}
+            onLogout={handleLogout}
+          >
+            {renderContent({ activeUser, authModalId })}
+          </AppPage>
 
-            <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-            <NewPostModalContainer id={newPostModalId} />
-          </HelmetProvider>
-        </SSRDataContext.Provider>
-      </Provider>
+          <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
+          <NewPostModalContainer id={newPostModalId} />
+        </HelmetProvider>
+      </SSRDataContext.Provider>
     );
   };
 

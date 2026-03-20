@@ -1,8 +1,5 @@
 import { ReactNode, useCallback, useId } from "react";
 import { renderToString } from "react-dom/server";
-import { Provider } from "react-redux";
-import { combineReducers, legacy_createStore as createStore } from "redux";
-import { reducer as formReducer } from "redux-form";
 import { Helmet, HelmetProvider } from "react-helmet";
 
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
@@ -85,28 +82,18 @@ const ServerApp = ({
   );
 };
 
-function createFreshStore() {
-  const rootReducer = combineReducers({
-    form: formReducer,
-  });
-  return createStore(rootReducer);
-}
-
 export function render(pageName: string, pageProps: Record<string, unknown>, ssrData: SSRPayload) {
-  const store = createFreshStore();
   const helmetContext: Record<string, unknown> = {};
 
   const html = renderToString(
-    <Provider store={store}>
-      <SSRDataContext.Provider value={ssrData.routeData}>
-        <ServerApp
-          activeUser={ssrData.activeUser}
-          helmetContext={helmetContext}
-          pageName={pageName as PageName}
-          pageProps={pageProps}
-        />
-      </SSRDataContext.Provider>
-    </Provider>,
+    <SSRDataContext.Provider value={ssrData.routeData}>
+      <ServerApp
+        activeUser={ssrData.activeUser}
+        helmetContext={helmetContext}
+        pageName={pageName as PageName}
+        pageProps={pageProps}
+      />
+    </SSRDataContext.Provider>,
   );
 
   return { html, helmetContext };

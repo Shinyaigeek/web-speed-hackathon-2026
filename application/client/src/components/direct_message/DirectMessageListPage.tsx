@@ -40,10 +40,6 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
     void loadConversations();
   });
 
-  if (conversations == null) {
-    return null;
-  }
-
   return (
     <section>
       <header className="border-cax-border flex flex-col gap-4 border-b px-4 pt-6 pb-4">
@@ -59,7 +55,13 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
         </div>
       </header>
 
-      {error != null ? (
+      {conversations == null && error == null ? (
+        <div className="flex justify-center py-12">
+          <span className="text-cax-text-muted animate-spin text-2xl">
+            <FontAwesomeIcon iconType="circle-notch" styleType="solid" />
+          </span>
+        </div>
+      ) : error != null ? (
         <p className="text-cax-danger px-4 py-6 text-center text-sm">DMの取得に失敗しました</p>
       ) : conversations.length === 0 ? (
         <p className="text-cax-text-muted px-4 py-6 text-center">

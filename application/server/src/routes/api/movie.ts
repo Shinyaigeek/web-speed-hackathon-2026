@@ -7,9 +7,9 @@ import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
-import { convertMovieToMp4, extractPosterFromMp4 } from "@web-speed-hackathon-2026/server/src/utils/convert_media";
+import { convertMovieToWebm, extractPosterFromWebm } from "@web-speed-hackathon-2026/server/src/utils/convert_media";
 
-const EXTENSION = "mp4";
+const EXTENSION = "webm";
 
 export const movieRouter = Router();
 
@@ -28,7 +28,7 @@ movieRouter.post("/movies", async (req, res) => {
 
   const movieId = uuidv4();
 
-  const outputBuffer = await convertMovieToMp4(req.body);
+  const outputBuffer = await convertMovieToWebm(req.body);
 
   const moviesDir = path.resolve(UPLOAD_PATH, "movies");
   await fs.mkdir(moviesDir, { recursive: true });
@@ -36,7 +36,7 @@ movieRouter.post("/movies", async (req, res) => {
   const filePath = path.resolve(moviesDir, `${movieId}.${EXTENSION}`);
   await fs.writeFile(filePath, outputBuffer);
 
-  const posterBuffer = await extractPosterFromMp4(outputBuffer);
+  const posterBuffer = await extractPosterFromWebm(outputBuffer);
   const posterPath = path.resolve(moviesDir, `${movieId}-poster.webp`);
   await fs.writeFile(posterPath, posterBuffer);
 

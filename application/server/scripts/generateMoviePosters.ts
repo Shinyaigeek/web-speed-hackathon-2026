@@ -8,10 +8,10 @@ const execFileAsync = promisify(execFile);
 const PUBLIC_PATH = path.resolve(import.meta.dirname, "../../public");
 const MOVIES_DIR = path.join(PUBLIC_PATH, "movies");
 
-async function generatePoster(mp4Path: string, posterPath: string): Promise<void> {
+async function generatePoster(videoPath: string, posterPath: string): Promise<void> {
   await execFileAsync("ffmpeg", [
     "-i",
-    mp4Path,
+    videoPath,
     "-frames:v",
     "1",
     "-vf",
@@ -24,12 +24,12 @@ async function generatePoster(mp4Path: string, posterPath: string): Promise<void
 }
 
 async function main(): Promise<void> {
-  const files = fs.readdirSync(MOVIES_DIR).filter((f) => f.endsWith(".mp4"));
+  const files = fs.readdirSync(MOVIES_DIR).filter((f) => f.endsWith(".webm"));
 
   console.log(`Generating posters for ${files.length} movies...`);
 
   for (const file of files) {
-    const id = path.basename(file, ".mp4");
+    const id = path.basename(file, ".webm");
     const mp4Path = path.join(MOVIES_DIR, file);
     const posterPath = path.join(MOVIES_DIR, `${id}-poster.webp`);
 

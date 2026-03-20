@@ -3,7 +3,7 @@ export function getImagePath(imageId: string, width: number = 640): string {
 }
 
 export function getMoviePath(movieId: string): string {
-  return `/movies/${movieId}.mp4`;
+  return `/movies/${movieId}.webm`;
 }
 
 export function getMoviePosterPath(movieId: string): string {

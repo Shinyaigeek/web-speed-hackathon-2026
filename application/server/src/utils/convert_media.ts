@@ -8,11 +8,11 @@ import { v4 as uuidv4 } from "uuid";
 
 const execFileAsync = promisify(execFile);
 
-export async function convertMovieToMp4(inputBuffer: Buffer): Promise<Buffer> {
+export async function convertMovieToWebm(inputBuffer: Buffer): Promise<Buffer> {
   const tmpDir = os.tmpdir();
   const id = uuidv4();
   const inputPath = path.join(tmpDir, `${id}-input`);
-  const outputPath = path.join(tmpDir, `${id}-output.mp4`);
+  const outputPath = path.join(tmpDir, `${id}-output.webm`);
 
   try {
     await fs.writeFile(inputPath, inputBuffer);
@@ -26,16 +26,14 @@ export async function convertMovieToMp4(inputBuffer: Buffer): Promise<Buffer> {
       "10",
       "-vf",
       "crop='min(iw,ih)':'min(iw,ih)'",
-      "-movflags",
-      "+faststart",
       "-pix_fmt",
       "yuv420p",
       "-c:v",
-      "libx264",
+      "libvpx-vp9",
       "-crf",
-      "30",
-      "-preset",
-      "medium",
+      "50",
+      "-b:v",
+      "0",
       "-an",
       outputPath,
     ]);
@@ -47,10 +45,10 @@ export async function convertMovieToMp4(inputBuffer: Buffer): Promise<Buffer> {
   }
 }
 
-export async function extractPosterFromMp4(inputBuffer: Buffer): Promise<Buffer> {
+export async function extractPosterFromWebm(inputBuffer: Buffer): Promise<Buffer> {
   const tmpDir = os.tmpdir();
   const id = uuidv4();
-  const inputPath = path.join(tmpDir, `${id}-input.mp4`);
+  const inputPath = path.join(tmpDir, `${id}-input.webm`);
   const outputPath = path.join(tmpDir, `${id}-poster.webp`);
 
   try {

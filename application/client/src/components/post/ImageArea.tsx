@@ -24,7 +24,7 @@ export const ImageArea = ({ images, loading = "lazy" }: Props) => {
                 "row-span-2": images.length <= 2 || (images.length === 3 && idx === 0),
               })}
             >
-              <CoveredImage alt={image.alt} imageId={image.id} loading={loading} />
+              <CoveredImage alt={image.alt} imageCount={images.length} imageId={image.id} loading={loading} />
             </div>
           );
         })}

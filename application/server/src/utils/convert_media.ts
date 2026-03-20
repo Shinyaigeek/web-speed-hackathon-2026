@@ -47,6 +47,34 @@ export async function convertMovieToMp4(inputBuffer: Buffer): Promise<Buffer> {
   }
 }
 
+export async function extractPosterFromMp4(inputBuffer: Buffer): Promise<Buffer> {
+  const tmpDir = os.tmpdir();
+  const id = uuidv4();
+  const inputPath = path.join(tmpDir, `${id}-input.mp4`);
+  const outputPath = path.join(tmpDir, `${id}-poster.webp`);
+
+  try {
+    await fs.writeFile(inputPath, inputBuffer);
+
+    await execFileAsync("ffmpeg", [
+      "-i",
+      inputPath,
+      "-frames:v",
+      "1",
+      "-vf",
+      "scale=320:-1",
+      "-q:v",
+      "80",
+      outputPath,
+    ]);
+
+    return await fs.readFile(outputPath);
+  } finally {
+    await fs.unlink(inputPath).catch(() => {});
+    await fs.unlink(outputPath).catch(() => {});
+  }
+}
+
 interface SoundMetadata {
   artist?: string;
   title?: string;

@@ -8,12 +8,19 @@ interface Props {
   alt: string;
   imageId: string;
   loading?: "eager" | "lazy";
+  /** 投稿内の画像枚数（sizes 属性の最適化に使う） */
+  imageCount?: number;
 }
 
 /**
  * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します
  */
-export const CoveredImage = ({ alt, imageId, loading = "lazy" }: Props) => {
+export const CoveredImage = ({ alt, imageId, imageCount = 1, loading = "lazy" }: Props) => {
+  // 単一画像: 最大 ~496px, 複数画像: 最大 ~246px (2列グリッド)
+  const sizes =
+    imageCount === 1
+      ? "(max-width: 640px) calc(100vw - 80px), 496px"
+      : "(max-width: 640px) calc((100vw - 84px) / 2), 246px";
   const dialogId = useId();
   const [loaded, setLoaded] = useState(false);
   // ダイアログの背景をクリックしたときに投稿詳細ページに遷移しないようにする
@@ -29,9 +36,9 @@ export const CoveredImage = ({ alt, imageId, loading = "lazy" }: Props) => {
         className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
         loading={loading}
         {...(loading === "eager" ? { fetchPriority: "high" as const } : {})}
-        sizes="(max-width: 640px) 100vw, 640px"
+        sizes={sizes}
         src={getImagePath(imageId, 640)}
-        srcSet={`${getImagePath(imageId, 640)} 640w, ${getImagePath(imageId, 960)} 960w`}
+        srcSet={`${getImagePath(imageId, 320)} 320w, ${getImagePath(imageId, 640)} 640w, ${getImagePath(imageId, 960)} 960w`}
         onLoad={() => setLoaded(true)}
       />
 

@@ -7,7 +7,7 @@ import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
-import { convertMovieToMp4 } from "@web-speed-hackathon-2026/server/src/utils/convert_media";
+import { convertMovieToMp4, extractPosterFromMp4 } from "@web-speed-hackathon-2026/server/src/utils/convert_media";
 
 const EXTENSION = "mp4";
 
@@ -30,9 +30,15 @@ movieRouter.post("/movies", async (req, res) => {
 
   const outputBuffer = await convertMovieToMp4(req.body);
 
-  const filePath = path.resolve(UPLOAD_PATH, `./movies/${movieId}.${EXTENSION}`);
-  await fs.mkdir(path.resolve(UPLOAD_PATH, "movies"), { recursive: true });
+  const moviesDir = path.resolve(UPLOAD_PATH, "movies");
+  await fs.mkdir(moviesDir, { recursive: true });
+
+  const filePath = path.resolve(moviesDir, `${movieId}.${EXTENSION}`);
   await fs.writeFile(filePath, outputBuffer);
+
+  const posterBuffer = await extractPosterFromMp4(outputBuffer);
+  const posterPath = path.resolve(moviesDir, `${movieId}-poster.webp`);
+  await fs.writeFile(posterPath, posterBuffer);
 
   return res.status(200).type("application/json").send({ id: movieId });
 });

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 import { PausableMovie } from "@web-speed-hackathon-2026/client/src/components/foundation/PausableMovie";
-import { getMoviePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
+import { getMoviePath, getMoviePosterPath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
   movie: Models.Movie;
@@ -35,7 +35,7 @@ export const MovieArea = ({ movie, priority = false }: Props) => {
       className="border-cax-border bg-cax-surface-subtle relative h-full w-full overflow-hidden rounded-lg border"
       data-movie-area
     >
-      {visible ? <PausableMovie priority={priority} src={getMoviePath(movie.id)} /> : null}
+      {visible ? <PausableMovie poster={getMoviePosterPath(movie.id)} priority={priority} src={getMoviePath(movie.id)} /> : null}
     </div>
   );
 };

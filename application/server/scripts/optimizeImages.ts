@@ -6,7 +6,7 @@ import sharp from "sharp";
 const PUBLIC_PATH = path.resolve(import.meta.dirname, "../../public");
 
 const PROFILE_SIZES = [96, 256];
-const POST_SIZES = [640, 960];
+const POST_SIZES = [320, 640, 960];
 const WEBP_QUALITY = 80;
 
 async function optimizeProfileImages(): Promise<void> {

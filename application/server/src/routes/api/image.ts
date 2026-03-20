@@ -10,7 +10,7 @@ import { v4 as uuidv4 } from "uuid";
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 const EXTENSION = "jpg";
-const POST_SIZES = [640, 960];
+const POST_SIZES = [320, 640, 960];
 const WEBP_QUALITY = 80;
 
 export const imageRouter = Router();

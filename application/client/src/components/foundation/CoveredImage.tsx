@@ -2,16 +2,17 @@ import { MouseEvent, useCallback, useId } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
+import { getImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
   alt: string;
-  src: string;
+  imageId: string;
 }
 
 /**
  * アスペクト比を維持したまま、要素のコンテンツボックス全体を埋めるように画像を拡大縮小します
  */
-export const CoveredImage = ({ alt, src }: Props) => {
+export const CoveredImage = ({ alt, imageId }: Props) => {
   const dialogId = useId();
   // ダイアログの背景をクリックしたときに投稿詳細ページに遷移しないようにする
   const handleDialogClick = useCallback((ev: MouseEvent<HTMLDialogElement>) => {
@@ -24,7 +25,9 @@ export const CoveredImage = ({ alt, src }: Props) => {
         alt={alt}
         className="h-full w-full object-cover"
         loading="lazy"
-        src={src}
+        sizes="(max-width: 640px) 100vw, 640px"
+        src={getImagePath(imageId, 640)}
+        srcSet={`${getImagePath(imageId, 640)} 640w, ${getImagePath(imageId, 960)} 960w`}
       />
 
       <button

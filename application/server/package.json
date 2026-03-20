@@ -10,7 +10,8 @@
     "start": "tsx src/index.ts",
     "typecheck": "tsc --noEmit",
     "seed:generate": "tsx ./scripts/generateSeeds.ts",
-    "seed:insert": "tsx ./scripts/insertSeeds.ts"
+    "seed:insert": "tsx ./scripts/insertSeeds.ts",
+    "optimize:images": "tsx ./scripts/optimizeImages.ts"
   },
   "dependencies": {
     "@tsconfig/strictest": "2.0.8",
@@ -27,6 +28,7 @@
     "kuromoji": "0.1.2",
     "music-metadata": "11.10.3",
     "negaposi-analyzer-ja": "1.0.1",
+    "sharp": "^0.33.5",
     "sequelize": "6.37.7",
     "serve-static": "2.2.0",
     "sqlite3": "5.1.7",

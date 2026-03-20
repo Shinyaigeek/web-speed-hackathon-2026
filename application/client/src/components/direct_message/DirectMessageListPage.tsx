@@ -70,7 +70,7 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
       ) : (
         <ul data-testid="dm-list">
           {conversations.map((conversation) => {
-            const { messages } = conversation;
+            const messages = conversation.messages ?? [];
             const peer =
               conversation.initiator.id !== activeUser.id
                 ? conversation.initiator

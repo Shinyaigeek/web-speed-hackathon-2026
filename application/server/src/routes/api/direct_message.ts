@@ -150,7 +150,7 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
     throw new httpErrors.Unauthorized();
   }
 
-  const conversation = await DirectMessageConversation.scope(["withParticipants", "withMessages"]).findOne({
+  const conversation = await DirectMessageConversation.scope("withParticipants").findOne({
     where: {
       id: req.params.conversationId,
       [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
@@ -161,6 +161,44 @@ directMessageRouter.get("/dm/:conversationId", async (req, res) => {
   }
 
   return res.status(200).type("application/json").send(conversation);
+});
+
+directMessageRouter.get("/dm/:conversationId/messages", async (req, res) => {
+  if (req.session.userId === undefined) {
+    throw new httpErrors.Unauthorized();
+  }
+
+  const conversation = await DirectMessageConversation.findOne({
+    where: {
+      id: req.params.conversationId,
+      [Op.or]: [{ initiatorId: req.session.userId }, { memberId: req.session.userId }],
+    },
+  });
+  if (conversation === null) {
+    throw new httpErrors.NotFound();
+  }
+
+  const limit = Math.min(Math.max(parseInt(String(req.query["limit"]), 10) || 20, 1), 50);
+  const before = typeof req.query["before"] === "string" ? req.query["before"] : undefined;
+
+  const whereClause: Record<string, unknown> = { conversationId: conversation.id };
+  if (before) {
+    const cursor = await DirectMessage.findByPk(before, { attributes: ["createdAt"] });
+    if (cursor) {
+      whereClause["createdAt"] = { [Op.lt]: cursor.createdAt };
+    }
+  }
+
+  const rows = await DirectMessage.scope("withSender").findAll({
+    where: whereClause,
+    order: [["createdAt", "DESC"]],
+    limit: limit + 1,
+  });
+
+  const hasMore = rows.length > limit;
+  const messages = rows.slice(0, limit).reverse();
+
+  return res.status(200).type("application/json").send({ messages, hasMore });
 });
 
 directMessageRouter.ws("/dm/:conversationId", async (req, _res) => {

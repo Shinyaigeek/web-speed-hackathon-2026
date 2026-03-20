@@ -129,7 +129,7 @@ export const ChatInput = ({ isStreaming, onSendMessage }: Props) => {
       }
 
       const tokens = extractTokens(tokenizer.tokenize(inputValue));
-      const results = filterSuggestionsBM25(tokenizer, candidates, tokens);
+      const results = await filterSuggestionsBM25(tokenizer, candidates, tokens);
 
       if (cancelled) {
         return;

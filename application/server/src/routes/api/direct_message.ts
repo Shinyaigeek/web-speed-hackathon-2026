@@ -17,6 +17,8 @@ directMessageRouter.get("/dm", async (req, res) => {
   }
 
   const userId = req.session.userId;
+  const limit = Math.min(Math.max(parseInt(String(req.query["limit"]), 10) || 50, 1), 50);
+  const offset = Math.max(parseInt(String(req.query["offset"]), 10) || 0, 0);
 
   // Step 1: Get conversations with participants only (no messages)
   const conversations = await DirectMessageConversation.scope("withParticipants").findAll({
@@ -81,7 +83,7 @@ directMessageRouter.get("/dm", async (req, res) => {
       return bTime - aTime;
     });
 
-  return res.status(200).type("application/json").send(sorted);
+  return res.status(200).type("application/json").send(sorted.slice(offset, offset + limit));
 });
 
 directMessageRouter.post("/dm", async (req, res) => {

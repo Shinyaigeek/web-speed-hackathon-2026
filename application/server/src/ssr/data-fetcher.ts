@@ -1,4 +1,4 @@
-import { Op } from "sequelize";
+import { Op, QueryTypes } from "sequelize";
 
 import {
   DirectMessage,
@@ -9,6 +9,7 @@ import {
 
 const INITIAL_LIMIT = 30;
 const DM_LIMIT = 20;
+const DM_LIST_LIMIT = 15;
 
 interface SSRData {
   routeData: Record<string, unknown>;
@@ -50,6 +51,69 @@ export async function fetchSSRData(
       const post = await Post.scope("withRelations").findByPk(postId);
       if (post) {
         routeData[`/api/v1/posts/${postId}`] = post.toJSON();
+      }
+    }
+
+    // DM list page: /dm
+    if (pathname === "/dm" && sessionUserId) {
+      const conversations = await DirectMessageConversation.scope("withParticipants").findAll({
+        where: {
+          [Op.or]: [{ initiatorId: sessionUserId }, { memberId: sessionUserId }],
+        },
+      });
+
+      if (conversations.length > 0) {
+        const conversationIds = conversations.map((c) => c.id);
+        const sequelize = DirectMessage.sequelize!;
+
+        const latestMessageRows = await sequelize.query<{ id: string; conversationId: string }>(
+          `SELECT id, conversationId FROM (
+             SELECT id, conversationId, ROW_NUMBER() OVER (PARTITION BY conversationId ORDER BY createdAt DESC) as rn
+             FROM DirectMessages
+             WHERE conversationId IN (:conversationIds)
+           ) sub WHERE rn = 1`,
+          { replacements: { conversationIds }, type: QueryTypes.SELECT },
+        );
+
+        if (latestMessageRows.length > 0) {
+          const latestMessages = await DirectMessage.scope("withSender").findAll({
+            where: { id: { [Op.in]: latestMessageRows.map((r) => r.id) } },
+          });
+
+          const unreadRows = await sequelize.query<{ conversationId: string; unreadCount: number }>(
+            `SELECT conversationId, COUNT(*) as unreadCount FROM DirectMessages
+             WHERE conversationId IN (:conversationIds)
+             AND senderId != :userId
+             AND isRead = 0
+             GROUP BY conversationId`,
+            { replacements: { conversationIds, userId: sessionUserId }, type: QueryTypes.SELECT },
+          );
+
+          const latestMessageMap = new Map(latestMessages.map((m) => [m.conversationId, m]));
+          const unreadMap = new Map(unreadRows.map((r) => [r.conversationId, true]));
+
+          const sorted = conversations
+            .filter((c) => latestMessageMap.has(c.id))
+            .map((c) => {
+              const latestMessage = latestMessageMap.get(c.id)!;
+              return {
+                ...c.toJSON(),
+                messages: [latestMessage],
+                hasUnread: unreadMap.get(c.id) ?? false,
+              };
+            })
+            .sort((a, b) => {
+              const aTime = new Date(a.messages[0]!.createdAt).getTime();
+              const bTime = new Date(b.messages[0]!.createdAt).getTime();
+              return bTime - aTime;
+            });
+
+          routeData["/api/v1/dm"] = sorted.slice(0, DM_LIST_LIMIT);
+        } else {
+          routeData["/api/v1/dm"] = [];
+        }
+      } else {
+        routeData["/api/v1/dm"] = [];
       }
     }
 

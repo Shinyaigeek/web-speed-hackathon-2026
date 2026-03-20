@@ -4,24 +4,32 @@ import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SS
 
 const LIMIT = 30;
 
+interface Options {
+  initialLimit?: number;
+}
+
 interface ReturnValues<T> {
   data: Array<T>;
   error: Error | null;
   hasMore: boolean;
   isLoading: boolean;
   fetchMore: () => void;
+  reset: () => void;
 }
 
 export function useInfiniteFetch<T>(
   apiPath: string,
   fetcher: (apiPath: string) => Promise<T[]>,
+  options?: Options,
 ): ReturnValues<T> {
+  const initialLimit = options?.initialLimit;
   const ssrData = useContext(SSRDataContext);
   const ssrValue = ssrData?.[apiPath] as T[] | undefined;
   const skipRef = useRef(ssrValue !== undefined);
+  const isFirstFetchRef = useRef(true);
 
   const internalRef = useRef({
-    hasMore: ssrValue !== undefined ? ssrValue.length >= LIMIT : true,
+    hasMore: ssrValue !== undefined ? ssrValue.length >= (initialLimit ?? LIMIT) : true,
     isLoading: false,
     offset: ssrValue !== undefined ? ssrValue.length : 0,
   });
@@ -29,7 +37,7 @@ export function useInfiniteFetch<T>(
   const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
     data: ssrValue !== undefined ? ssrValue : [],
     error: null,
-    hasMore: ssrValue !== undefined ? ssrValue.length >= LIMIT : true,
+    hasMore: ssrValue !== undefined ? ssrValue.length >= (initialLimit ?? LIMIT) : true,
     isLoading: ssrValue !== undefined ? false : true,
   });
 
@@ -38,6 +46,8 @@ export function useInfiniteFetch<T>(
     if (isLoading || !hasMore) {
       return;
     }
+
+    const currentLimit = isFirstFetchRef.current && initialLimit != null ? initialLimit : LIMIT;
 
     setResult((cur) => ({
       ...cur,
@@ -49,11 +59,12 @@ export function useInfiniteFetch<T>(
     };
 
     const separator = apiPath.includes("?") ? "&" : "?";
-    const paginatedPath = `${apiPath}${separator}limit=${LIMIT}&offset=${offset}`;
+    const paginatedPath = `${apiPath}${separator}limit=${currentLimit}&offset=${offset}`;
 
     void fetcher(paginatedPath).then(
       (pageData) => {
-        const newHasMore = pageData.length >= LIMIT;
+        const newHasMore = pageData.length >= currentLimit;
+        isFirstFetchRef.current = false;
         setResult((cur) => ({
           ...cur,
           data: [...cur.data, ...pageData],
@@ -78,7 +89,22 @@ export function useInfiniteFetch<T>(
         };
       },
     );
-  }, [apiPath, fetcher]);
+  }, [apiPath, fetcher, initialLimit]);
+
+  const reset = useCallback(() => {
+    setResult({
+      data: [],
+      error: null,
+      hasMore: true,
+      isLoading: true,
+    });
+    internalRef.current = {
+      hasMore: true,
+      isLoading: false,
+      offset: 0,
+    };
+    isFirstFetchRef.current = true;
+  }, []);
 
   useEffect(() => {
     if (skipRef.current) {
@@ -104,5 +130,6 @@ export function useInfiniteFetch<T>(
   return {
     ...result,
     fetchMore,
+    reset,
   };
 }

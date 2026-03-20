@@ -1,45 +1,17 @@
-import { useCallback, useEffect, useState } from "react";
-
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
-import { useWs } from "@web-speed-hackathon-2026/client/src/hooks/use_ws";
-import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
 interface Props {
   activeUser: Models.User;
   newDmModalId: string;
+  conversations: Array<Models.DirectMessageConversation>;
+  error: Error | null;
+  isLoading: boolean;
 }
 
-export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
-  const [conversations, setConversations] =
-    useState<Array<Models.DirectMessageConversation> | null>(null);
-  const [error, setError] = useState<Error | null>(null);
-
-  const loadConversations = useCallback(async () => {
-    if (activeUser == null) {
-      return;
-    }
-
-    try {
-      const conversations = await fetchJSON<Array<Models.DirectMessageConversation>>("/api/v1/dm");
-      setConversations(conversations);
-      setError(null);
-    } catch (error) {
-      setConversations(null);
-      setError(error as Error);
-    }
-  }, [activeUser]);
-
-  useEffect(() => {
-    void loadConversations();
-  }, [loadConversations]);
-
-  useWs("/api/v1/dm/unread", () => {
-    void loadConversations();
-  });
-
+export const DirectMessageListPage = ({ activeUser, newDmModalId, conversations, error, isLoading }: Props) => {
   return (
     <section>
       <header className="border-cax-border flex flex-col gap-4 border-b px-4 pt-6 pb-4">
@@ -55,7 +27,7 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId }: Props) => {
         </div>
       </header>
 
-      {conversations == null && error == null ? (
+      {conversations.length === 0 && isLoading ? (
         <div className="flex justify-center py-12">
           <span className="text-cax-text-muted animate-spin text-2xl">
             <FontAwesomeIcon iconType="circle-notch" styleType="solid" />

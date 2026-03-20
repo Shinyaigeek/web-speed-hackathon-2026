@@ -27,6 +27,7 @@ export function useInfiniteFetch<T>(
   const ssrValue = ssrData?.[apiPath] as T[] | undefined;
   const skipRef = useRef(ssrValue !== undefined);
   const isFirstFetchRef = useRef(true);
+  const [resetKey, setResetKey] = useState(0);
 
   const internalRef = useRef({
     hasMore: ssrValue !== undefined ? ssrValue.length >= (initialLimit ?? LIMIT) : true,
@@ -34,7 +35,7 @@ export function useInfiniteFetch<T>(
     offset: ssrValue !== undefined ? ssrValue.length : 0,
   });
 
-  const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore">>({
+  const [result, setResult] = useState<Omit<ReturnValues<T>, "fetchMore" | "reset">>({
     data: ssrValue !== undefined ? ssrValue : [],
     error: null,
     hasMore: ssrValue !== undefined ? ssrValue.length >= (initialLimit ?? LIMIT) : true,
@@ -104,6 +105,7 @@ export function useInfiniteFetch<T>(
       offset: 0,
     };
     isFirstFetchRef.current = true;
+    setResetKey((k) => k + 1);
   }, []);
 
   useEffect(() => {
@@ -125,7 +127,7 @@ export function useInfiniteFetch<T>(
     };
 
     fetchMore();
-  }, [fetchMore]);
+  }, [fetchMore, resetKey]);
 
   return {
     ...result,

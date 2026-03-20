@@ -28,8 +28,6 @@ const config = {
   devtool: "source-map",
   entry: {
     main: [
-      "core-js",
-      "regenerator-runtime/runtime",
       "jquery-binarytransport",
       path.resolve(SRC_PATH, "./index.css"),
       path.resolve(SRC_PATH, "./buildinfo.ts"),
@@ -91,7 +89,7 @@ const config = {
     }),
     new HtmlWebpackPlugin({
       inject: "head",
-      scriptLoading: "blocking",
+      scriptLoading: "defer",
       template: path.resolve(SRC_PATH, "./index.html"),
     }),
   ],

@@ -4,10 +4,10 @@ module.exports = {
     [
       "@babel/preset-env",
       {
-        targets: "> 0.5%, last 2 versions, not dead",
+        targets: "defaults and supports es6-module",
         corejs: "3",
         modules: false,
-        useBuiltIns: false,
+        useBuiltIns: "usage",
       },
     ],
     [

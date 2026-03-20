@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useId, useState } from "react";
+import { MouseEvent, useCallback, useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
@@ -23,6 +23,24 @@ export const CoveredImage = ({ alt, imageId, imageCount = 1, loading = "lazy" }:
       : "(max-width: 640px) calc((100vw - 84px) / 2), 246px";
   const dialogId = useId();
   const [loaded, setLoaded] = useState(false);
+  const [fetchedAlt, setFetchedAlt] = useState<string | null>(null);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (dialog == null) return;
+    const handleToggle = () => {
+      if (dialog.open && fetchedAlt === null) {
+        fetch(`/api/v1/images/${imageId}/alt`)
+          .then((res) => res.json())
+          .then((data: { alt: string }) => setFetchedAlt(data.alt))
+          .catch(() => setFetchedAlt(""));
+      }
+    };
+    dialog.addEventListener("toggle", handleToggle);
+    return () => dialog.removeEventListener("toggle", handleToggle);
+  }, [imageId, fetchedAlt]);
+
   // ダイアログの背景をクリックしたときに投稿詳細ページに遷移しないようにする
   const handleDialogClick = useCallback((ev: MouseEvent<HTMLDialogElement>) => {
     ev.stopPropagation();
@@ -51,11 +69,11 @@ export const CoveredImage = ({ alt, imageId, imageCount = 1, loading = "lazy" }:
         ALT を表示する
       </button>
 
-      <Modal id={dialogId} closedby="any" onClick={handleDialogClick}>
+      <Modal id={dialogId} ref={dialogRef} closedby="any" onClick={handleDialogClick}>
         <div className="grid gap-y-6">
           <h1 className="text-center text-2xl font-bold">画像の説明</h1>
 
-          <p className="text-sm">{alt}</p>
+          <p className="text-sm">{fetchedAlt !== null ? fetchedAlt : "読み込み中..."}</p>
 
           <Button variant="secondary" command="close" commandfor={dialogId}>
             閉じる

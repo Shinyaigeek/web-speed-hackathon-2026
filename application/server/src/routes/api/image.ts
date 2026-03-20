@@ -6,6 +6,7 @@ import httpErrors from "http-errors";
 import sharp from "sharp";
 import { v4 as uuidv4 } from "uuid";
 
+import { Image } from "@web-speed-hackathon-2026/server/src/models";
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
 
 const POST_SIZES = [320, 640, 960];
@@ -50,6 +51,14 @@ function extractImageDescription(exifBuffer: Buffer | undefined): string {
 }
 
 export const imageRouter = Router();
+
+imageRouter.get("/images/:imageId/alt", async (req, res) => {
+  const image = await Image.findByPk(req.params.imageId);
+  if (image === null) {
+    throw new httpErrors.NotFound();
+  }
+  return res.status(200).type("application/json").send({ alt: image.alt });
+});
 
 imageRouter.post("/images", async (req, res) => {
   if (req.session.userId === undefined) {

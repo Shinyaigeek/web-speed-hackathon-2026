@@ -2,6 +2,8 @@
 const path = require("path");
 
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
+const lightningcss = require("lightningcss");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const webpack = require("webpack");
 
@@ -79,6 +81,15 @@ const config = {
           { loader: "css-loader", options: { url: false } },
           { loader: "postcss-loader" },
         ],
+        exclude: /katex/,
+      },
+      {
+        test: /katex.*\.css$/i,
+        use: [
+          { loader: MiniCssExtractPlugin.loader },
+          { loader: "css-loader", options: { url: false } },
+          { loader: path.resolve(__dirname, "strip-legacy-fonts-loader.js") },
+        ],
       },
       {
         resourceQuery: /binary/,
@@ -135,6 +146,15 @@ const config = {
   },
   optimization: {
     minimize: true,
+    minimizer: [
+      "...",
+      new CssMinimizerPlugin({
+        minify: CssMinimizerPlugin.lightningCssMinify,
+        minimizerOptions: {
+          targets: lightningcss.browserslistToTargets(["chrome >= 130", "firefox >= 130", "safari >= 18"]),
+        },
+      }),
+    ],
     splitChunks: {
       chunks: "all",
     },

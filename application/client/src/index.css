@@ -1,7 +1,6 @@
 @import "tailwindcss";
-@import "normalize.css" layer(normalize);
 
-@layer normalize, theme, base, components, utilities;
+@layer theme, base, components, utilities;
 
 @font-face {
   /* Source Han Serif JP Heavy の Y 軸を 1/1.43 に縮小した改変フォント（利用規約見出し用サブセット） */

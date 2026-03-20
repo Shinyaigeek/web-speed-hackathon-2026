@@ -1,6 +1,5 @@
 import { ReactNode, useCallback, useEffect, useId, useState } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
-import { Helmet, HelmetProvider } from "react-helmet";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
 import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
@@ -19,63 +18,6 @@ declare global {
     };
   }
 }
-
-interface PageWrapperProps {
-  ssrActiveUser?: Models.User | null;
-  children: ReactNode;
-}
-
-const PageWrapper = ({ ssrActiveUser, children }: PageWrapperProps) => {
-  const hasSSRData = ssrActiveUser !== undefined;
-  const [activeUser, setActiveUser] = useState<Models.User | null>(hasSSRData ? ssrActiveUser! : null);
-  const [isLoadingActiveUser, setIsLoadingActiveUser] = useState(!hasSSRData);
-
-  useEffect(() => {
-    if (hasSSRData) return;
-    void fetchJSON<Models.User>("/api/v1/me")
-      .then((user) => {
-        setActiveUser(user);
-      })
-      .finally(() => {
-        setIsLoadingActiveUser(false);
-      });
-  }, [hasSSRData]);
-
-  const handleLogout = useCallback(async () => {
-    await sendJSON("/api/v1/signout", {});
-    setActiveUser(null);
-    window.location.href = "/";
-  }, []);
-
-  const authModalId = useId();
-  const newPostModalId = useId();
-
-  if (isLoadingActiveUser) {
-    return (
-      <HelmetProvider>
-        <Helmet>
-          <title>読込中 - CaX</title>
-        </Helmet>
-      </HelmetProvider>
-    );
-  }
-
-  return (
-    <HelmetProvider>
-      <AppPage
-        activeUser={activeUser}
-        authModalId={authModalId}
-        newPostModalId={newPostModalId}
-        onLogout={handleLogout}
-      >
-        {children}
-      </AppPage>
-
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-      <NewPostModalContainer id={newPostModalId} />
-    </HelmetProvider>
-  );
-};
 
 export function createPage(renderContent: (props: { activeUser: Models.User | null; authModalId: string }) => ReactNode) {
   const ssrData = window.__SSR_DATA__;
@@ -107,30 +49,23 @@ export function createPage(renderContent: (props: { activeUser: Models.User | nu
     const newPostModalId = useId();
 
     if (isLoadingActiveUser) {
-      return (
-        <HelmetProvider>
-          <Helmet>
-            <title>読込中 - CaX</title>
-          </Helmet>
-        </HelmetProvider>
-      );
+      document.title = "読込中 - CaX";
+      return null;
     }
 
     return (
       <SSRDataContext.Provider value={ssrData?.routeData ?? null}>
-        <HelmetProvider>
-          <AppPage
-            activeUser={activeUser}
-            authModalId={authModalId}
-            newPostModalId={newPostModalId}
-            onLogout={handleLogout}
-          >
-            {renderContent({ activeUser, authModalId })}
-          </AppPage>
+        <AppPage
+          activeUser={activeUser}
+          authModalId={authModalId}
+          newPostModalId={newPostModalId}
+          onLogout={handleLogout}
+        >
+          {renderContent({ activeUser, authModalId })}
+        </AppPage>
 
-          <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-          <NewPostModalContainer id={newPostModalId} />
-        </HelmetProvider>
+        <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
+        <NewPostModalContainer id={newPostModalId} />
       </SSRDataContext.Provider>
     );
   };

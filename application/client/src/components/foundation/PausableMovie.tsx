@@ -14,6 +14,7 @@ interface Props {
 export const PausableMovie = ({ src }: Props) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [loaded, setLoaded] = useState(false);
 
   const handleClick = useCallback(() => {
     const video = videoRef.current;
@@ -32,6 +33,8 @@ export const PausableMovie = ({ src }: Props) => {
     const video = videoRef.current;
     if (video == null) return;
 
+    setLoaded(true);
+
     // 視覚効果 off のとき GIF を自動再生しない
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
       video.pause();
@@ -47,6 +50,7 @@ export const PausableMovie = ({ src }: Props) => {
         onClick={handleClick}
         type="button"
       >
+        {!loaded && <div className="bg-cax-surface-subtle absolute inset-0 animate-pulse" />}
         <video
           ref={videoRef}
           autoPlay
@@ -54,7 +58,7 @@ export const PausableMovie = ({ src }: Props) => {
           muted
           playsInline
           preload="metadata"
-          className="w-full"
+          className={`w-full transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
           onLoadedMetadata={handleLoadedMetadata}
           src={src}
         />

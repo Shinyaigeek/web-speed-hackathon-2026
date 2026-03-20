@@ -21,7 +21,7 @@ let ssrBundle: {
     pageName: string,
     pageProps: Record<string, unknown>,
     ssrData: unknown,
-  ) => { html: string; helmetContext: Record<string, unknown> };
+  ) => { html: string };
 } | null = null;
 let initialized = false;
 
@@ -89,9 +89,45 @@ function initialize() {
   }
 }
 
+interface SSRData {
+  routeData: Record<string, unknown>;
+  activeUser: unknown | null;
+}
+
+function getTitle(pageName: string, pageProps: Record<string, unknown>, ssrData: SSRData): string {
+  switch (pageName) {
+    case "timeline":
+      return "タイムライン - CaX";
+    case "dm-list":
+      return "ダイレクトメッセージ - CaX";
+    case "dm":
+      return "ダイレクトメッセージ - CaX";
+    case "search":
+      return "検索 - CaX";
+    case "user-profile": {
+      const username = pageProps.username as string;
+      const user = ssrData.routeData[`/api/v1/users/${username}`] as { name: string } | undefined;
+      return user ? `${user.name} さんのタイムライン - CaX` : "CaX";
+    }
+    case "post": {
+      const postId = pageProps.postId as string;
+      const post = ssrData.routeData[`/api/v1/posts/${postId}`] as { user: { name: string } } | undefined;
+      return post ? `${post.user.name} さんのつぶやき - CaX` : "CaX";
+    }
+    case "terms":
+      return "利用規約 - CaX";
+    case "crok":
+      return "Crok - CaX";
+    case "not-found":
+      return "ページが見つかりません - CaX";
+    default:
+      return "CaX";
+  }
+}
+
 function buildHtml(
   appHtml: string,
-  helmetContext: Record<string, unknown>,
+  titleTag: string,
   ssrData: unknown,
   pageName: string,
 ): string {
@@ -104,28 +140,6 @@ function buildHtml(
   const cssLinks = entry.css.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n");
   const jsScripts = entry.js.map((src) => `<script defer src="${src}"></script>`).join("\n");
 
-  // Helmet tags
-  let titleTag = "<title>CaX</title>";
-  let metaTags = "";
-  let linkTags = "";
-  const helmet = (helmetContext as Record<string, unknown>).helmet as
-    | { title: { toString: () => string }; meta: { toString: () => string }; link: { toString: () => string } }
-    | undefined;
-  if (helmet) {
-    const titleStr = helmet.title.toString();
-    if (titleStr) {
-      titleTag = titleStr;
-    }
-    const metaStr = helmet.meta.toString();
-    if (metaStr) {
-      metaTags = metaStr;
-    }
-    const linkStr = helmet.link.toString();
-    if (linkStr) {
-      linkTags = linkStr;
-    }
-  }
-
   const serialized = JSON.stringify(ssrData).replace(/</g, "\\u003c");
   const ssrDataScript = `<script>window.__SSR_DATA__=${serialized}</script>`;
 
@@ -134,9 +148,7 @@ function buildHtml(
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-${titleTag}
-${metaTags}
-${linkTags}
+<title>${titleTag}</title>
 ${cssLinks}
 ${jsScripts}
 </head>
@@ -201,9 +213,10 @@ ssrRouter.get("/{*any}", async (req, res, next) => {
   try {
     const ssrData = await fetchSSRData(req.path, req.session?.userId);
 
-    const { html: appHtml, helmetContext } = ssrBundle.render(pageName, pageProps, ssrData);
+    const { html: appHtml } = ssrBundle.render(pageName, pageProps, ssrData);
+    const title = getTitle(pageName, pageProps, ssrData);
 
-    const fullHtml = buildHtml(appHtml, helmetContext, ssrData, pageName);
+    const fullHtml = buildHtml(appHtml, title, ssrData, pageName);
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     res.setHeader("Cache-Control", "no-cache");

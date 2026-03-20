@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useId } from "react";
+import { MouseEvent, useCallback, useId, useState } from "react";
 
 import { Button } from "@web-speed-hackathon-2026/client/src/components/foundation/Button";
 import { Modal } from "@web-speed-hackathon-2026/client/src/components/modal/Modal";
@@ -14,6 +14,7 @@ interface Props {
  */
 export const CoveredImage = ({ alt, imageId }: Props) => {
   const dialogId = useId();
+  const [loaded, setLoaded] = useState(false);
   // ダイアログの背景をクリックしたときに投稿詳細ページに遷移しないようにする
   const handleDialogClick = useCallback((ev: MouseEvent<HTMLDialogElement>) => {
     ev.stopPropagation();
@@ -21,13 +22,15 @@ export const CoveredImage = ({ alt, imageId }: Props) => {
 
   return (
     <div className="relative h-full w-full overflow-hidden">
+      {!loaded && <div className="bg-cax-surface-subtle absolute inset-0 animate-pulse" />}
       <img
         alt={alt}
-        className="h-full w-full object-cover"
+        className={`h-full w-full object-cover transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}
         loading="lazy"
         sizes="(max-width: 640px) 100vw, 640px"
         src={getImagePath(imageId, 640)}
         srcSet={`${getImagePath(imageId, 640)} 640w, ${getImagePath(imageId, 960)} 960w`}
+        onLoad={() => setLoaded(true)}
       />
 
       <button

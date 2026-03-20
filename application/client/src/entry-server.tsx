@@ -1,6 +1,5 @@
 import { ReactNode, useCallback, useId } from "react";
 import { renderToString } from "react-dom/server";
-import { Helmet, HelmetProvider } from "react-helmet";
 
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
@@ -49,12 +48,10 @@ const PAGE_MAP: Record<PageName, (props: PageProps) => ReactNode> = {
 
 const ServerApp = ({
   activeUser,
-  helmetContext,
   pageName,
   pageProps,
 }: {
   activeUser: Models.User | null;
-  helmetContext: Record<string, unknown>;
   pageName: PageName;
   pageProps: Record<string, unknown>;
 }) => {
@@ -66,7 +63,7 @@ const ServerApp = ({
   const content = renderPage({ activeUser, authModalId, ...pageProps });
 
   return (
-    <HelmetProvider context={helmetContext}>
+    <>
       <AppPage
         activeUser={activeUser}
         authModalId={authModalId}
@@ -78,23 +75,20 @@ const ServerApp = ({
 
       <AuthModalContainer id={authModalId} onUpdateActiveUser={() => {}} />
       <NewPostModalContainer id={newPostModalId} />
-    </HelmetProvider>
+    </>
   );
 };
 
 export function render(pageName: string, pageProps: Record<string, unknown>, ssrData: SSRPayload) {
-  const helmetContext: Record<string, unknown> = {};
-
   const html = renderToString(
     <SSRDataContext.Provider value={ssrData.routeData}>
       <ServerApp
         activeUser={ssrData.activeUser}
-        helmetContext={helmetContext}
         pageName={pageName as PageName}
         pageProps={pageProps}
       />
     </SSRDataContext.Provider>,
   );
 
-  return { html, helmetContext };
+  return { html };
 }

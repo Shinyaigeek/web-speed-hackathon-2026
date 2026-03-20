@@ -1,11 +1,11 @@
 import { useContext } from "react";
-import { Helmet } from "react-helmet";
 
 import { InfiniteScroll } from "@web-speed-hackathon-2026/client/src/components/foundation/InfiniteScroll";
 import { PostPage } from "@web-speed-hackathon-2026/client/src/components/post/PostPage";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
 import { useInfiniteFetch } from "@web-speed-hackathon-2026/client/src/hooks/use_infinite_fetch";
+import { useTitle } from "@web-speed-hackathon-2026/client/src/hooks/use_title";
 import { fetchJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
 interface Props {
@@ -21,15 +21,14 @@ export const PostContainer = ({ postId }: Props) => {
     fetchJSON,
   );
 
+  useTitle(post ? `${post.user.name} さんのつぶやき - CaX` : "CaX");
+
   if (post === null) {
     return <NotFoundContainer />;
   }
 
   return (
     <InfiniteScroll fetchMore={fetchMore} hasMore={hasMore} items={comments}>
-      <Helmet>
-        <title>{post.user.name} さんのつぶやき - CaX</title>
-      </Helmet>
       <PostPage comments={comments} isLoadingComments={isLoadingComments} post={post} />
     </InfiniteScroll>
   );

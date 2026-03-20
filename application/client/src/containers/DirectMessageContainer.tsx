@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Helmet } from "react-helmet";
 
 import { DirectMessageGate } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageGate";
 import { DirectMessagePage } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessagePage";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
+import { useTitle } from "@web-speed-hackathon-2026/client/src/hooks/use_title";
 import { useWs } from "@web-speed-hackathon-2026/client/src/hooks/use_ws";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
 
@@ -137,6 +137,12 @@ export const DirectMessageContainer = ({ activeUser, authModalId, conversationId
     }
   });
 
+  const peer = conversationInfo
+    ? (conversationInfo.initiator.id !== activeUser?.id ? conversationInfo.initiator : conversationInfo.member)
+    : null;
+
+  useTitle(peer ? `${peer.name} さんとのダイレクトメッセージ - CaX` : "ダイレクトメッセージ - CaX");
+
   if (activeUser === null) {
     return (
       <DirectMessageGate
@@ -159,27 +165,19 @@ export const DirectMessageContainer = ({ activeUser, authModalId, conversationId
     );
   }
 
-  const peer =
-    conversationInfo.initiator.id !== activeUser?.id ? conversationInfo.initiator : conversationInfo.member;
-
   return (
-    <>
-      <Helmet>
-        <title>{peer.name} さんとのダイレクトメッセージ - CaX</title>
-      </Helmet>
-      <DirectMessagePage
-        conversationInfo={conversationInfo}
-        messages={messages}
-        hasMore={hasMore}
-        isLoadingMessages={isLoadingMessages}
-        onLoadOlderMessages={loadOlderMessages}
-        conversationError={conversationError}
-        activeUser={activeUser}
-        onTyping={handleTyping}
-        isPeerTyping={isPeerTyping}
-        isSubmitting={isSubmitting}
-        onSubmit={handleSubmit}
-      />
-    </>
+    <DirectMessagePage
+      conversationInfo={conversationInfo}
+      messages={messages}
+      hasMore={hasMore}
+      isLoadingMessages={isLoadingMessages}
+      onLoadOlderMessages={loadOlderMessages}
+      conversationError={conversationError}
+      activeUser={activeUser}
+      onTyping={handleTyping}
+      isPeerTyping={isPeerTyping}
+      isSubmitting={isSubmitting}
+      onSubmit={handleSubmit}
+    />
   );
 };

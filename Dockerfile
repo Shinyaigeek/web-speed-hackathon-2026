@@ -11,6 +11,7 @@ ENV PNPM_HOME=/pnpm
 
 WORKDIR /app
 RUN --mount=type=cache,target=/root/.npm npm install -g pnpm@${PNPM_VERSION}
+RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && rm -rf /var/lib/apt/lists/*
 
 FROM base AS build
 

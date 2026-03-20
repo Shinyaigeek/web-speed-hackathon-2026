@@ -1,11 +1,20 @@
-import { ReactNode, useCallback, useEffect, useId, useState } from "react";
+import { lazy, ReactNode, Suspense, useCallback, useEffect, useId, useState } from "react";
 import { createRoot, hydrateRoot } from "react-dom/client";
 
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
-import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
 import { fetchJSON, sendJSON } from "@web-speed-hackathon-2026/client/src/utils/fetchers";
+
+const AuthModalContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/AuthModalContainer").then((m) => ({
+    default: m.AuthModalContainer,
+  })),
+);
+const NewPostModalContainer = lazy(() =>
+  import("@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer").then((m) => ({
+    default: m.NewPostModalContainer,
+  })),
+);
 
 import "../buildinfo";
 
@@ -63,8 +72,10 @@ export function createPage(renderContent: (props: { activeUser: Models.User | nu
           {renderContent({ activeUser, authModalId })}
         </AppPage>
 
-        <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
-        <NewPostModalContainer id={newPostModalId} />
+        <Suspense fallback={null}>
+          <AuthModalContainer id={authModalId} onUpdateActiveUser={setActiveUser} />
+          <NewPostModalContainer id={newPostModalId} />
+        </Suspense>
       </SSRDataContext.Provider>
     );
   };

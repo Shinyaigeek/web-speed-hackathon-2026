@@ -1,16 +1,10 @@
-import { lazy, Suspense, useContext } from "react";
+import { useContext } from "react";
 
-import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
+import { CommentSection } from "@web-speed-hackathon-2026/client/src/components/post/CommentSection";
 import { PostPage } from "@web-speed-hackathon-2026/client/src/components/post/PostPage";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
 import { useTitle } from "@web-speed-hackathon-2026/client/src/hooks/use_title";
-
-const CommentSection = lazy(() =>
-  import("@web-speed-hackathon-2026/client/src/components/post/CommentSection").then((m) => ({
-    default: m.CommentSection,
-  })),
-);
 
 interface Props {
   postId?: string;
@@ -28,17 +22,7 @@ export const PostContainer = ({ postId }: Props) => {
 
   return (
     <PostPage post={post}>
-      <Suspense
-        fallback={
-          <div className="flex justify-center py-4">
-            <span className="text-cax-text-muted animate-spin text-xl">
-              <FontAwesomeIcon iconType="circle-notch" styleType="solid" />
-            </span>
-          </div>
-        }
-      >
-        <CommentSection postId={postId!} />
-      </Suspense>
+      <CommentSection postId={postId!} />
     </PostPage>
   );
 };

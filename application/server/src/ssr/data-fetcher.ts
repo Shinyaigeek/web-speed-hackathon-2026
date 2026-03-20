@@ -1,6 +1,7 @@
 import { Op, QueryTypes } from "sequelize";
 
 import {
+  Comment,
   DirectMessage,
   DirectMessageConversation,
   Post,
@@ -48,9 +49,16 @@ export async function fetchSSRData(
     const postMatch = pathname.match(/^\/posts\/([^/]+)$/);
     if (postMatch) {
       const postId = postMatch[1]!;
-      const post = await Post.scope("withRelations").findByPk(postId);
+      const [post, comments] = await Promise.all([
+        Post.scope("withRelations").findByPk(postId),
+        Comment.scope("withUser").findAll({
+          where: { postId },
+          limit: 10,
+        }),
+      ]);
       if (post) {
         routeData[`/api/v1/posts/${postId}`] = post.toJSON();
+        routeData[`/api/v1/posts/${postId}/comments`] = comments.map((c) => c.toJSON());
       }
     }
 

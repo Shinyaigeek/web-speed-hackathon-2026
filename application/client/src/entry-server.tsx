@@ -3,7 +3,6 @@ import { renderToString } from "react-dom/server";
 
 import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
 import { AppPage } from "@web-speed-hackathon-2026/client/src/components/application/AppPage";
-import { AuthModalContainer } from "@web-speed-hackathon-2026/client/src/containers/AuthModalContainer";
 import { TimelineContainer } from "@web-speed-hackathon-2026/client/src/containers/TimelineContainer";
 import { DirectMessageListContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageListContainer";
 import { DirectMessageContainer } from "@web-speed-hackathon-2026/client/src/containers/DirectMessageContainer";
@@ -13,7 +12,6 @@ import { PostContainer } from "@web-speed-hackathon-2026/client/src/containers/P
 import { TermContainer } from "@web-speed-hackathon-2026/client/src/containers/TermContainer";
 import { CrokContainer } from "@web-speed-hackathon-2026/client/src/containers/CrokContainer";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
-import { NewPostModalContainer } from "@web-speed-hackathon-2026/client/src/containers/NewPostModalContainer";
 
 interface SSRPayload {
   routeData: Record<string, unknown>;
@@ -63,19 +61,14 @@ const ServerApp = ({
   const content = renderPage({ activeUser, authModalId, ...pageProps });
 
   return (
-    <>
-      <AppPage
-        activeUser={activeUser}
-        authModalId={authModalId}
-        newPostModalId={newPostModalId}
-        onLogout={handleLogout}
-      >
-        {content}
-      </AppPage>
-
-      <AuthModalContainer id={authModalId} onUpdateActiveUser={() => {}} />
-      <NewPostModalContainer id={newPostModalId} />
-    </>
+    <AppPage
+      activeUser={activeUser}
+      authModalId={authModalId}
+      newPostModalId={newPostModalId}
+      onLogout={handleLogout}
+    >
+      {content}
+    </AppPage>
   );
 };
 

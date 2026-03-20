@@ -164,19 +164,6 @@ const config = {
           priority: 40,
           enforce: true,
         },
-        vendor: {
-          test: /[\\/]node_modules[\\/]/,
-          priority: 20,
-          name(module) {
-            const match = module.context.match(/[\\/]node_modules[\\/](.*?)([\\/]|$)/);
-            return match ? `vendor-${match[1].replace("@", "")}` : "vendor";
-          },
-        },
-        default: {
-          minChunks: 2,
-          priority: -20,
-          reuseExistingChunk: true,
-        },
       },
     },
     concatenateModules: true,

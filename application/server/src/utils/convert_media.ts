@@ -8,11 +8,11 @@ import { v4 as uuidv4 } from "uuid";
 
 const execFileAsync = promisify(execFile);
 
-export async function convertMovieToGif(inputBuffer: Buffer): Promise<Buffer> {
+export async function convertMovieToMp4(inputBuffer: Buffer): Promise<Buffer> {
   const tmpDir = os.tmpdir();
   const id = uuidv4();
   const inputPath = path.join(tmpDir, `${id}-input`);
-  const outputPath = path.join(tmpDir, `${id}-output.gif`);
+  const outputPath = path.join(tmpDir, `${id}-output.mp4`);
 
   try {
     await fs.writeFile(inputPath, inputBuffer);
@@ -26,6 +26,16 @@ export async function convertMovieToGif(inputBuffer: Buffer): Promise<Buffer> {
       "10",
       "-vf",
       "crop='min(iw,ih)':'min(iw,ih)'",
+      "-movflags",
+      "+faststart",
+      "-pix_fmt",
+      "yuv420p",
+      "-c:v",
+      "libx264",
+      "-crf",
+      "30",
+      "-preset",
+      "medium",
       "-an",
       outputPath,
     ]);

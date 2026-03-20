@@ -7,9 +7,9 @@ import httpErrors from "http-errors";
 import { v4 as uuidv4 } from "uuid";
 
 import { UPLOAD_PATH } from "@web-speed-hackathon-2026/server/src/paths";
-import { convertMovieToGif } from "@web-speed-hackathon-2026/server/src/utils/convert_media";
+import { convertMovieToMp4 } from "@web-speed-hackathon-2026/server/src/utils/convert_media";
 
-const EXTENSION = "gif";
+const EXTENSION = "mp4";
 
 export const movieRouter = Router();
 
@@ -28,12 +28,7 @@ movieRouter.post("/movies", async (req, res) => {
 
   const movieId = uuidv4();
 
-  let outputBuffer: Buffer;
-  if (type.mime === "image/gif") {
-    outputBuffer = req.body;
-  } else {
-    outputBuffer = await convertMovieToGif(req.body);
-  }
+  const outputBuffer = await convertMovieToMp4(req.body);
 
   const filePath = path.resolve(UPLOAD_PATH, `./movies/${movieId}.${EXTENSION}`);
   await fs.mkdir(path.resolve(UPLOAD_PATH, "movies"), { recursive: true });

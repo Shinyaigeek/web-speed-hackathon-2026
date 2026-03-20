@@ -22,6 +22,10 @@ RUN --mount=type=cache,target=/pnpm/store pnpm install --frozen-lockfile
 
 COPY ./application .
 
+# Optimize seed images and remove unused GIFs
+RUN pnpm --filter @web-speed-hackathon-2026/server optimize:images
+RUN rm -f ./public/movies/*.gif
+
 RUN NODE_OPTIONS="--max-old-space-size=4096" pnpm build
 
 RUN --mount=type=cache,target=/pnpm/store CI=true pnpm install --frozen-lockfile --prod --filter @web-speed-hackathon-2026/server

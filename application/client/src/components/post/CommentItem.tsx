@@ -2,6 +2,8 @@ import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation
 import { TranslatableText } from "@web-speed-hackathon-2026/client/src/components/post/TranslatableText";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
+const dtf = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+
 interface Props {
   comment: Models.Comment;
 }
@@ -44,7 +46,7 @@ export const CommentItem = ({ comment }: Props) => {
           </div>
           <p className="text-cax-text-muted pt-1 text-xs">
             <time dateTime={new Date(comment.createdAt).toISOString()}>
-              {new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" }).format(new Date(comment.createdAt))}
+              {dtf.format(new Date(comment.createdAt))}
             </time>
           </p>
         </div>

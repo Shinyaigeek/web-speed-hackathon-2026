@@ -14,7 +14,7 @@ export const CommentSection = ({ postId }: Props) => {
     fetchMore,
     hasMore,
     isLoading,
-  } = useInfiniteFetch<Models.Comment>(`/api/v1/posts/${postId}/comments`, fetchJSON, { initialLimit: 3 });
+  } = useInfiniteFetch<Models.Comment>(`/api/v1/posts/${postId}/comments`, fetchJSON, { initialLimit: 10 });
 
   if (isLoading && comments.length === 0) {
     return (

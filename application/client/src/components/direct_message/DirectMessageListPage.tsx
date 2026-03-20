@@ -3,6 +3,8 @@ import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components
 import { Link } from "@web-speed-hackathon-2026/client/src/components/foundation/Link";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
+const rtf = new Intl.RelativeTimeFormat("ja", { numeric: "auto" });
+
 interface Props {
   activeUser: Models.User;
   newDmModalId: string;
@@ -80,7 +82,6 @@ export const DirectMessageListPage = ({ activeUser, newDmModalId, conversations,
                               const minutes = Math.floor(seconds / 60);
                               const hours = Math.floor(minutes / 60);
                               const days = Math.floor(hours / 24);
-                              const rtf = new Intl.RelativeTimeFormat("ja", { numeric: "auto" });
                               if (days > 0) return rtf.format(-days, "day");
                               if (hours > 0) return rtf.format(-hours, "hour");
                               if (minutes > 0) return rtf.format(-minutes, "minute");

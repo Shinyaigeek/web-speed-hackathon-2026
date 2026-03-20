@@ -5,6 +5,8 @@ import { SoundArea } from "@web-speed-hackathon-2026/client/src/components/post/
 import { TranslatableText } from "@web-speed-hackathon-2026/client/src/components/post/TranslatableText";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
+const dtf = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+
 interface Props {
   post: Models.Post;
 }
@@ -69,7 +71,7 @@ export const PostItem = ({ post }: Props) => {
           <p className="mt-2 text-sm sm:mt-4">
             <Link className="text-cax-text-muted hover:underline" to={`/posts/${post.id}`}>
               <time dateTime={new Date(post.createdAt).toISOString()}>
-                {new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" }).format(new Date(post.createdAt))}
+                {dtf.format(new Date(post.createdAt))}
               </time>
             </Link>
           </p>

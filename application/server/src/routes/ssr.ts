@@ -16,6 +16,10 @@ interface Entrypoints {
 }
 
 let entrypoints: Entrypoints = {};
+const inlineCssCache: Record<string, string> = {};
+const fontPreloadCache: Record<string, string[]> = {};
+const staticHtmlCache: Record<string, string> = {};
+const STATIC_PAGES = new Set(["terms", "not-found"]);
 let ssrBundle: {
   render: (
     pageName: string,
@@ -74,6 +78,38 @@ function initialize() {
     }
   } catch (err) {
     console.error("SSR: Failed to read entrypoints.json:", err);
+  }
+
+  for (const [name, entry] of Object.entries(entrypoints)) {
+    const fontUrls: string[] = [];
+    for (const href of entry.css) {
+      if (!inlineCssCache[href]) {
+        try {
+          const cssPath = path.join(CLIENT_DIST_PATH, href);
+          let content = fs.readFileSync(cssPath, "utf-8");
+          // Rewrite relative url() to absolute paths so CSS works when inlined in HTML
+          const cssDir = href.substring(0, href.lastIndexOf("/") + 1);
+          content = content.replace(/url\(["']?(?!(?:data:|https?:|\/))([^"')]+)["']?\)/g, (_match, relUrl: string) => {
+            return `url(${cssDir}${relUrl})`;
+          });
+          inlineCssCache[href] = content;
+        } catch {
+          // CSS file not found; will fall back to <link> in buildHtml
+        }
+      }
+      const content = inlineCssCache[href];
+      if (content) {
+        const fontUrlRegex = /url\(["']?([^"')]*\.woff2)["']?\)/g;
+        let match;
+        while ((match = fontUrlRegex.exec(content)) !== null) {
+          const url = match[1]!;
+          if (!fontUrls.includes(url)) {
+            fontUrls.push(url);
+          }
+        }
+      }
+    }
+    fontPreloadCache[name] = fontUrls;
   }
 
   try {
@@ -145,7 +181,17 @@ function buildHtml(
     return "";
   }
 
-  const cssLinks = entry.css.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n");
+  const fontPreloads = (fontPreloadCache[pageName] ?? [])
+    .slice(0, 3)
+    .map((url) => `<link rel="preload" href="${url}" as="font" type="font/woff2" crossorigin>`)
+    .join("\n");
+  const cssInline = entry.css.map((href) => {
+    const content = inlineCssCache[href];
+    if (content) {
+      return `<style>${content}</style>`;
+    }
+    return `<link rel="stylesheet" href="${href}">`;
+  }).join("\n");
   const jsScripts = entry.js.map((src) => `<script defer src="${src}"></script>`).join("\n");
 
   const serialized = JSON.stringify(ssrData).replace(/</g, "\\u003c");
@@ -162,7 +208,8 @@ function buildHtml(
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${titleTag}</title>
-${cssLinks}
+${fontPreloads}
+${cssInline}
 ${jsScripts}
 </head>
 <body class="bg-cax-canvas text-cax-text">
@@ -177,7 +224,13 @@ function buildFallbackHtml(pageName: string): string {
   const entry = entrypoints[pageName];
   if (!entry) return "";
 
-  const cssLinks = entry.css.map((href) => `<link rel="stylesheet" href="${href}">`).join("\n");
+  const cssInline = entry.css.map((href) => {
+    const content = inlineCssCache[href];
+    if (content) {
+      return `<style>${content}</style>`;
+    }
+    return `<link rel="stylesheet" href="${href}">`;
+  }).join("\n");
   const jsScripts = entry.js.map((src) => `<script defer src="${src}"></script>`).join("\n");
 
   return `<!doctype html>
@@ -186,7 +239,7 @@ function buildFallbackHtml(pageName: string): string {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CaX</title>
-${cssLinks}
+${cssInline}
 ${jsScripts}
 </head>
 <body class="bg-cax-canvas text-cax-text">
@@ -224,6 +277,15 @@ ssrRouter.get("/{*any}", async (req, res, next) => {
     return next();
   }
 
+  const isStatic = STATIC_PAGES.has(pageName);
+
+  // Serve from cache for static pages without session
+  if (isStatic && !req.session?.userId && staticHtmlCache[pageName]) {
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=300, s-maxage=3600");
+    return res.send(staticHtmlCache[pageName]);
+  }
+
   try {
     const ssrData = await fetchSSRData(req.path, req.session?.userId);
 
@@ -232,8 +294,13 @@ ssrRouter.get("/{*any}", async (req, res, next) => {
 
     const fullHtml = buildHtml(appHtml, title, ssrData, pageName);
 
+    // Cache static pages for non-logged-in users
+    if (isStatic && !req.session?.userId) {
+      staticHtmlCache[pageName] = fullHtml;
+    }
+
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "no-cache");
+    res.setHeader("Cache-Control", isStatic ? "public, max-age=300, s-maxage=3600" : "no-cache");
     res.send(fullHtml);
   } catch (err) {
     console.error("SSR render error:", err);

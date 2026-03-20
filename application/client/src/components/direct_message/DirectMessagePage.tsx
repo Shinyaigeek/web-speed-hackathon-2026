@@ -15,6 +15,8 @@ import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
+const dtf = new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit", hour12: false });
+
 interface Props {
   conversationInfo: Models.DirectMessageConversation | null;
   messages: Models.DirectMessage[];
@@ -249,7 +251,7 @@ export const DirectMessagePage = ({
                 </p>
                 <div className="flex gap-1 text-xs">
                   <time dateTime={message.createdAt}>
-                    {new Intl.DateTimeFormat("ja-JP", { hour: "2-digit", minute: "2-digit", hour12: false }).format(new Date(message.createdAt))}
+                    {dtf.format(new Date(message.createdAt))}
                   </time>
                   {isActiveUserSend && message.isRead && (
                     <span className="text-cax-text-muted">既読</span>

@@ -7,6 +7,8 @@ import { SoundArea } from "@web-speed-hackathon-2026/client/src/components/post/
 import { TranslatableText } from "@web-speed-hackathon-2026/client/src/components/post/TranslatableText";
 import { getProfileImagePath } from "@web-speed-hackathon-2026/client/src/utils/get_path";
 
+const dtf = new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" });
+
 const isClickedAnchorOrButton = (target: EventTarget | null, currentTarget: Element): boolean => {
   while (target !== null && target instanceof Element) {
     const tagName = target.tagName.toLowerCase();
@@ -78,7 +80,7 @@ export const TimelineItem = ({ post, priority = false }: Props) => {
             <span className="text-cax-text-muted pr-1">-</span>
             <Link className="text-cax-text-muted pr-1 hover:underline" to={`/posts/${post.id}`}>
               <time dateTime={new Date(post.createdAt).toISOString()}>
-                {new Intl.DateTimeFormat("ja-JP", { year: "numeric", month: "long", day: "numeric" }).format(new Date(post.createdAt))}
+                {dtf.format(new Date(post.createdAt))}
               </time>
             </Link>
           </p>

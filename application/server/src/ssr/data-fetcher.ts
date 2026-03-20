@@ -1,6 +1,14 @@
-import { Post, User } from "@web-speed-hackathon-2026/server/src/models";
+import { Op } from "sequelize";
+
+import {
+  DirectMessage,
+  DirectMessageConversation,
+  Post,
+  User,
+} from "@web-speed-hackathon-2026/server/src/models";
 
 const INITIAL_LIMIT = 30;
+const DM_LIMIT = 20;
 
 interface SSRData {
   routeData: Record<string, unknown>;
@@ -42,6 +50,30 @@ export async function fetchSSRData(
       const post = await Post.scope("withRelations").findByPk(postId);
       if (post) {
         routeData[`/api/v1/posts/${postId}`] = post.toJSON();
+      }
+    }
+
+    // DM detail page: /dm/:conversationId
+    const dmMatch = pathname.match(/^\/dm\/([^/]+)$/);
+    if (dmMatch && sessionUserId) {
+      const conversationId = dmMatch[1]!;
+      const conversation = await DirectMessageConversation.scope("withParticipants").findOne({
+        where: {
+          id: conversationId,
+          [Op.or]: [{ initiatorId: sessionUserId }, { memberId: sessionUserId }],
+        },
+      });
+      if (conversation) {
+        routeData[`/api/v1/dm/${conversationId}`] = conversation.toJSON();
+
+        const rows = await DirectMessage.scope("withSender").findAll({
+          where: { conversationId: conversation.id },
+          order: [["createdAt", "DESC"]],
+          limit: DM_LIMIT + 1,
+        });
+        const hasMore = rows.length > DM_LIMIT;
+        const messages = rows.slice(0, DM_LIMIT).reverse().map((m) => m.toJSON());
+        routeData[`/api/v1/dm/${conversationId}/messages`] = { messages, hasMore };
       }
     }
 

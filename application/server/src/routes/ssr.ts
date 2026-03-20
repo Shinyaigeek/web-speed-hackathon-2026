@@ -100,8 +100,16 @@ function getTitle(pageName: string, pageProps: Record<string, unknown>, ssrData:
       return "タイムライン - CaX";
     case "dm-list":
       return "ダイレクトメッセージ - CaX";
-    case "dm":
+    case "dm": {
+      const convId = pageProps["conversationId"] as string;
+      const conv = ssrData.routeData[`/api/v1/dm/${convId}`] as { initiator: { id: string; name: string }; member: { id: string; name: string } } | undefined;
+      if (conv && ssrData.activeUser) {
+        const activeUserId = (ssrData.activeUser as { id: string }).id;
+        const peer = conv.initiator.id !== activeUserId ? conv.initiator : conv.member;
+        return `${peer.name} さんとのダイレクトメッセージ - CaX`;
+      }
       return "ダイレクトメッセージ - CaX";
+    }
     case "search":
       return "検索 - CaX";
     case "user-profile": {
@@ -143,6 +151,11 @@ function buildHtml(
   const serialized = JSON.stringify(ssrData).replace(/</g, "\\u003c");
   const ssrDataScript = `<script>window.__SSR_DATA__=${serialized}</script>`;
 
+  const initScripts: string[] = [];
+  if (pageName === "dm") {
+    initScripts.push(`<script>(function(){var e=document.querySelector("[data-dm-scroll]");if(e)e.scrollTop=e.scrollHeight})()</script>`);
+  }
+
   return `<!doctype html>
 <html lang="ja">
 <head>
@@ -154,6 +167,7 @@ ${jsScripts}
 </head>
 <body class="bg-cax-canvas text-cax-text">
 <div id="app">${appHtml}</div>
+${initScripts.join("\n")}
 ${ssrDataScript}
 </body>
 </html>`;

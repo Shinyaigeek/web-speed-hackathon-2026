@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useRef, useState } from "react";
 
 import { DirectMessageGate } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessageGate";
 import { DirectMessagePage } from "@web-speed-hackathon-2026/client/src/components/direct_message/DirectMessagePage";
 import { FontAwesomeIcon } from "@web-speed-hackathon-2026/client/src/components/foundation/FontAwesomeIcon";
 import { NotFoundContainer } from "@web-speed-hackathon-2026/client/src/containers/NotFoundContainer";
+import { SSRDataContext } from "@web-speed-hackathon-2026/client/src/contexts/SSRDataContext";
 import { DirectMessageFormData } from "@web-speed-hackathon-2026/client/src/direct_message/types";
 import { useTitle } from "@web-speed-hackathon-2026/client/src/hooks/use_title";
 import { useWs } from "@web-speed-hackathon-2026/client/src/hooks/use_ws";
@@ -27,10 +28,20 @@ interface Props {
 }
 
 export const DirectMessageContainer = ({ activeUser, authModalId, conversationId = "" }: Props) => {
-  const [conversationInfo, setConversationInfo] = useState<Models.DirectMessageConversation | null>(null);
+  const ssrData = useContext(SSRDataContext);
+  const ssrConversation = ssrData?.[`/api/v1/dm/${conversationId}`] as Models.DirectMessageConversation | undefined;
+  const ssrMessages = ssrData?.[`/api/v1/dm/${conversationId}/messages`] as Models.DirectMessagePage | undefined;
+  const hasSSRData = ssrConversation !== undefined && ssrMessages !== undefined;
+  const skipInitialFetchRef = useRef(hasSSRData);
+
+  const [conversationInfo, setConversationInfo] = useState<Models.DirectMessageConversation | null>(
+    hasSSRData ? ssrConversation : null,
+  );
   const [conversationError, setConversationError] = useState<Error | null>(null);
-  const [messages, setMessages] = useState<Models.DirectMessage[]>([]);
-  const [hasMore, setHasMore] = useState(false);
+  const [messages, setMessages] = useState<Models.DirectMessage[]>(
+    hasSSRData ? ssrMessages.messages : [],
+  );
+  const [hasMore, setHasMore] = useState(hasSSRData ? ssrMessages.hasMore : false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,6 +98,12 @@ export const DirectMessageContainer = ({ activeUser, authModalId, conversationId
   }, [conversationId]);
 
   useEffect(() => {
+    if (skipInitialFetchRef.current) {
+      skipInitialFetchRef.current = false;
+      // Still mark messages as read
+      void sendRead();
+      return;
+    }
     void loadConversationInfo();
     void loadLatestMessages();
     void sendRead();

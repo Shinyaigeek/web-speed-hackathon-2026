@@ -45,9 +45,14 @@ export const DirectMessagePage = ({
   const formRef = useRef<HTMLFormElement>(null);
   const textAreaId = useId();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const topSentinelRef = useRef<HTMLDivElement>(null);
   const prevFirstMessageIdRef = useRef<string | null>(null);
   const prevMessageCountRef = useRef<number>(0);
+
+  // Refs to avoid recreating scroll handler on every state change
+  const hasMoreRef = useRef(hasMore);
+  const isLoadingMessagesRef = useRef(isLoadingMessages);
+  const onLoadOlderMessagesRef = useRef(onLoadOlderMessages);
+  const isLoadingOlderRef = useRef(false);
 
   const peer = conversationInfo
     ? conversationInfo.initiator.id !== activeUser.id
@@ -123,25 +128,41 @@ export const DirectMessagePage = ({
     }
   });
 
-  // IntersectionObserver for top sentinel
+  // Keep refs in sync
   useEffect(() => {
-    const sentinel = topSentinelRef.current;
-    const container = scrollContainerRef.current;
-    if (!sentinel || !container) return;
+    hasMoreRef.current = hasMore;
+    isLoadingMessagesRef.current = isLoadingMessages;
+    onLoadOlderMessagesRef.current = onLoadOlderMessages;
+  });
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0]?.isIntersecting && hasMore && !isLoadingMessages) {
-          // Save scrollHeight before loading
-          container.dataset["prevScrollHeight"] = String(container.scrollHeight);
-          onLoadOlderMessages();
-        }
-      },
-      { root: container, rootMargin: "200px 0px 0px 0px" },
-    );
-    observer.observe(sentinel);
-    return () => observer.disconnect();
-  }, [hasMore, isLoadingMessages, onLoadOlderMessages]);
+  // Reset loading guard when loading completes
+  useEffect(() => {
+    if (!isLoadingMessages) {
+      isLoadingOlderRef.current = false;
+    }
+  }, [isLoadingMessages]);
+
+  // Scroll-based loading of older messages
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const handleScroll = () => {
+      if (
+        container.scrollTop < 200 &&
+        hasMoreRef.current &&
+        !isLoadingMessagesRef.current &&
+        !isLoadingOlderRef.current
+      ) {
+        isLoadingOlderRef.current = true;
+        container.dataset["prevScrollHeight"] = String(container.scrollHeight);
+        onLoadOlderMessagesRef.current();
+      }
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, []);
 
   if (conversationError != null) {
     return (
@@ -152,7 +173,7 @@ export const DirectMessagePage = ({
   }
 
   return (
-    <section className="bg-cax-surface flex min-h-[calc(100vh-(--spacing(12)))] flex-col lg:min-h-screen">
+    <section className="bg-cax-surface flex h-[calc(100vh-(--spacing(12)))] flex-col overflow-hidden lg:h-screen">
       <header className="border-cax-border bg-cax-surface sticky top-0 z-10 flex items-center gap-2 border-b px-4 py-3">
         {peer ? (
           <>
@@ -179,9 +200,16 @@ export const DirectMessagePage = ({
 
       <div
         ref={scrollContainerRef}
+        data-dm-scroll
         className="bg-cax-surface-subtle flex-1 space-y-4 overflow-y-auto px-4 pt-4 pb-8"
       >
-        {hasMore && <div ref={topSentinelRef} className="h-1" />}
+        {isLoadingMessages && messages.length > 0 && (
+          <div className="flex justify-center py-2">
+            <span className="text-cax-text-muted animate-spin text-lg">
+              <FontAwesomeIcon iconType="circle-notch" styleType="solid" />
+            </span>
+          </div>
+        )}
 
         {isLoadingMessages && messages.length === 0 && (
           <div className="flex justify-center py-4">

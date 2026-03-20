@@ -2,18 +2,19 @@ import { ReactNode, useEffect, useRef } from "react";
 
 interface Props {
   children: ReactNode;
+  hasMore?: boolean;
   items: any[];
   fetchMore: () => void;
 }
 
-export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
+export const InfiniteScroll = ({ children, fetchMore, hasMore = true, items }: Props) => {
   const latestItem = items[items.length - 1];
 
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
-    if (!sentinel) return;
+    if (!sentinel || !hasMore) return;
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -29,12 +30,12 @@ export const InfiniteScroll = ({ children, fetchMore, items }: Props) => {
     return () => {
       observer.disconnect();
     };
-  }, [latestItem, fetchMore]);
+  }, [latestItem, fetchMore, hasMore]);
 
   return (
     <>
       {children}
-      <div ref={sentinelRef} />
+      {hasMore && <div ref={sentinelRef} />}
     </>
   );
 };

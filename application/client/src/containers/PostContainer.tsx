@@ -16,7 +16,7 @@ export const PostContainer = ({ postId }: Props) => {
   const ssrData = useContext(SSRDataContext);
   const post = (ssrData?.[`/api/v1/posts/${postId}`] ?? null) as Models.Post | null;
 
-  const { data: comments, fetchMore, isLoading: isLoadingComments } = useInfiniteFetch<Models.Comment>(
+  const { data: comments, fetchMore, hasMore, isLoading: isLoadingComments } = useInfiniteFetch<Models.Comment>(
     `/api/v1/posts/${postId}/comments`,
     fetchJSON,
   );
@@ -26,7 +26,7 @@ export const PostContainer = ({ postId }: Props) => {
   }
 
   return (
-    <InfiniteScroll fetchMore={fetchMore} items={comments}>
+    <InfiniteScroll fetchMore={fetchMore} hasMore={hasMore} items={comments}>
       <Helmet>
         <title>{post.user.name} さんのつぶやき - CaX</title>
       </Helmet>
